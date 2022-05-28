@@ -109,6 +109,10 @@ for m = 1:Nimg
     I = double(imread(fn));
     Iall(:,:,m) = I  ; %filling 3d array by replacing zeros in 1st&2nd elements by the image values and 3rd element is index of image
     
+    % creating cropped input files for Onofre
+    I_input_stack_cropped(:,:, m) = double(I(1080:1080+100-1,1280:1280+150-1));
+    imwrite(I_input_stack_cropped(:,:, m), strcat(out_dir,'I_input_stack_cropped','_image_',sprintf('%04d',m),'.png'));
+    
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %% TODO 3: specify background region coordinates
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -131,6 +135,11 @@ for m = 1:Nimg
 end
 fprintf(['\nfinish loading images\n']);
 toc;
+
+%saving cropped input stacks
+all_vars_matfile = fullfile(out_dir, ['I_input_stack_cropped','.mat']);
+save(all_vars_matfile, 'I_input_stack_cropped');
+
 
 %% define processing ROI
 %Np = [2160, 2560];

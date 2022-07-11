@@ -1,4 +1,4 @@
-function [O, P, err, scale, Ns] = AlterMin( I, No, Ns, opts)
+function [O, P, dirac_cen, err, scale, Ns] = AlterMin( I, No, Ns, opts)
 fprintf('in the AlteMin fnc\n');
 %AlterMin Implements alternating minimization sequentially on a stack of
 %measurement I (n1 x n2 x nz). It consists of 2 loop. The main loop update
@@ -101,8 +101,8 @@ if nargin<4
     opts.H0 = ones(Np); % this is an extension to Tian14, the pupil function P is represented as a product of known and unknown components (P0*H0), where H0 can be user-supplied, and P0 is estimated below
     opts.poscalibrate = 0; % optimize the user-provided positions of the LEDs ? (stored in Ns)
     opts.calbratetol = 1e-1;
-    opts.F = @(x) fftshift(fft2(x));   %define FT  --> this is different from calling alterMin with >=5 params ?? - probably an error
-    opts.Ft = @(x) ifft2(ifftshift(x)); %inverse FT  --> this is different from calling alterMin with >=5 params ?? - probably an error
+    opts.F = @(x) fftshift(fft2(ifftshift(x)));
+    opts.Ft = @(x) fftshift(ifft2(ifftshift(x)));
 else
     if ~isfield(opts,'tol')
         opts.tol = 1;
@@ -242,6 +242,9 @@ fprintf('| %2d   | %.2e |\n',iter,err1);
 sp0 = max(row(abs(Ns(:,1,:)-Ns(:,2,:))));
 
 dirac_cen = zeros(293,2); %dirac positions corresponding to each image
+
+I_meas_stack = zeros(Np(1),Np(2), 293); % measured images stack
+
 while abs(err1-err2)>opts.tol&&iter<opts.maxIter
 %     psistack = zeros(64,64,293);
     fprintf('iter: %d \n', iter);
@@ -264,7 +267,7 @@ while abs(err1-err2)>opts.tol&&iter<opts.maxIter
         end
         % measured intensity
         I_mea = I(:,:,m); %taken from input stack
-
+        
         % compute field in real space
         psi0 = Ft(Psi_scale); 
 
@@ -292,9 +295,9 @@ while abs(err1-err2)>opts.tol&&iter<opts.maxIter
                 GDUpdate_Multiplication_rank_r(O,P,dpsi,Omax,cen,Ps,...
                 opts.OP_alpha,opts.OP_beta);
         end
+        
         %the actual application of the projection 2 
         [O,P] = P2(O,P,dPsi./repmat(H0,[1,1,r0]),Omax,cen);
-
         
         % ----------------- additional functionality of estimating updates to idealized LED positions --------------
         %    - Yeh et al. 2015
@@ -314,7 +317,15 @@ while abs(err1-err2)>opts.tol&&iter<opts.maxIter
                 cen(:,1)-sp0/3,cen(:,1)+sp0/3,[],[1,2],optsanneal);
             Ns(:,m,:) = cen0-cen_correct;
         end
+        
+        % add to stack of measured intesnitites
+        I_meas_stack(:,:, m) = I_mea;
+        
+        m_b4_sorting = opts.idx_led(m); % original id before NA sorting       
+        % saving them as TIFF images
+        imwrite2tif(I_mea, [], convertStringsToChars(strcat(opts.out_dir,'I_meas_',num2str(m_b4_sorting),'_image.tiff')), 'single','Compression',1);
 
+        
         %------------- final error --------------------
 
         % compute the total difference to determine stopping criterion
@@ -340,7 +351,7 @@ while abs(err1-err2)>opts.tol&&iter<opts.maxIter
         drawnow;
     end
     %end
-    
+
     %% compute error
     % record the error and can check the convergence later.
     err = [err,err2];
@@ -359,9 +370,12 @@ while abs(err1-err2)>opts.tol&&iter<opts.maxIter
     
 end
 
-%saving dirac peak positions as matfile & figure
-all_vars_matfile = fullfile(opts.out_dir, ['dirac_cen','.mat']);
-save(all_vars_matfile, 'dirac_cen', 'cen0', 'Ns');
+% saving measured intensities in matfile
+I_meas_stack_matfile = fullfile(opts.out_dir, 'I_meas_stack.mat');
+save(I_meas_stack_matfile, 'I_meas_stack', '-v7.3');
+
+
+% saving dirac peakw image
 f_edirac_peaks = figure('visible','off');
 scatter(dirac_cen(:,1), dirac_cen(:,2))
 labelpoints(dirac_cen(:,1), dirac_cen(:,2), string(opts.idx_led(:)), 'FontSize', 6);

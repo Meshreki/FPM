@@ -35,8 +35,8 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % use today's date to create new output directory
-todaysdatetime = string(datetime('now','Format','dd_MM_yyyy_HH_mm_ss'));
-todaysdate = string(datetime('today','Format','dd_MM_yyyy'));
+todaysdatetime = string(datetime('now','Format','yyyy_MM_dd_HH_mm_ss'));
+todaysdate = string(datetime('today','Format','yyyy_MM_dd'));
 
 
 
@@ -46,6 +46,8 @@ addpath('../dependencies/natsortfiles');
 addpath('../dependencies/export_fig');
 addpath('../dependencies/labelpoints');
 addpath('../dependencies/min_max_elements_index_n_values');
+addpath('../dependencies/normalize_img');
+addpath('../dependencies/imwrite2tif');
 
 
 % add path for functions files
@@ -107,6 +109,7 @@ for m = 1:Nimg
     disp(fn);
     % all image data
     I = double(imread(fn));
+    %I = normalize_img(I); % normalize measured image
     Iall(:,:,m) = I  ; %filling 3d array by replacing zeros in 1st&2nd elements by the image values and 3rd element is index of image
     
     % creating cropped input files for Onofre
@@ -142,8 +145,8 @@ save(all_vars_matfile, 'I_input_stack_cropped');
 
 
 %% define processing ROI
-%Np = [2160, 2560];
-Np = [344, 344];
+Np = [2160, 2560];
+%Np = [344, 344];
 
 
 %% read system parameters
@@ -220,8 +223,7 @@ end
 %load('C:\Users\Muneeb\Desktop\ajmal fpm\laura\multiplexed fpm\Ns_cal289.mat\');
 % Ns_reorder = Ns(:,idx_led,:);
 % Ithresh_reorder = Ithresh_reorder(:,:,1:89);
-Ns_reorder = Ns(:,idx_led,:); %why?
-                              % 1st element is empty!
+Ns_reorder = Ns(:,idx_led,:); % 1st element is empty!
                               % 3rd element has the indicies of the k_u and k_v
                               % now store in 2nd element the NA-indicies
                               % idx_led is the NA-indices, e.g.
@@ -237,11 +239,6 @@ Nused = 293;
 idx_used = 1:Nused;
 I = Ithresh_reorder(:,:,idx_used);
 Ns2 = Ns_reorder(:,idx_used,:);
-
-
-f_test = figure('visible','off');imshow(uint16(Ithresh_reorder(:,:,5)));
-title('img of I_input_to_AlterMin, old_index==128, reordered_index==5; patched into 344x344');
-export_fig(f_test,strcat(out_dir,'I_input_to_AlterMin_index_128.png'),'-m4');
 
 %% reconstruction algorithm options: opts
 %   tol: maximum change of error allowed in two consecutive iterations
@@ -268,7 +265,7 @@ export_fig(f_test,strcat(out_dir,'I_input_to_AlterMin_index_128.png'),'-m4');
     % caution: takes consierably much longer time to compute a single iteration
 %   F, Ft: operators of Fourier transform and inverse
 opts.tol = 1;
-opts.maxIter = 3; 
+opts.maxIter = 10; 
 opts.minIter = 1;
 opts.monotone = 1;
 % 'full', display every subroutin,
@@ -300,27 +297,31 @@ disp(['nstart: ', num2str(nstart)]);
 disp(['Np: ', num2str(Np)]);
 f88 = [];
 %% algorithm starts
-[O,P,err_pc,c,Ns_cal] = AlterMin(I,[N_obj(1),N_obj(2)],round(Ns2),opts);
+[O,P,dirac_cen,err_pc,c,Ns_cal] = AlterMin(I,[N_obj(1),N_obj(2)],round(Ns2),opts);
 
 %% save results
+
+%saving high res (here: after going to real) and dirac peak positions as matfile & figure
+hig_res_O_matfile = fullfile(opts.out_dir, ['high_res_O','.mat']);
+save(hig_res_O_matfile, 'O', 'P', 'dirac_cen', 'idx_led', 'Np', '-v7.3');
 
 % add tag for Np + maxIter
 Np_Iter = ['Np_',num2str(Np(1)),'_',num2str(Np(2)),'_minIter_',num2str(opts.minIter),'_maxIter_',num2str(opts.maxIter)];
 
-real_O = real(O);
-imwrite(real_O, strcat(out_dir,'O_',Np_Iter,'_image.png'));
-f1 = figure('visible','off');imshow(real_O);
-title('(O)');
-export_fig(f1,strcat(out_dir,'O_',Np_Iter,'_figure.png'),'-m4');
+%real_O = real(O);
+%imwrite(uint16(real_O), strcat(out_dir,'O_',Np_Iter,'_image.png'),'BitDepth',16);
+%f1 = figure('visible','off');imshow(real_O);
+%title('(O)');
+%export_fig(f1,strcat(out_dir,'O_',Np_Iter,'_figure.png'),'-m4');
 
 angle_O = angle(O);
-imwrite(angle_O, strcat(out_dir,'angle_O_',Np_Iter,'_image.png'));
+imwrite(uint16(angle_O), strcat(out_dir,'angle_O_',Np_Iter,'_image.png'),'BitDepth',16);
 f2 = figure('visible','off');imshow(angle_O,[]);
 title('angle (O)');
 export_fig(f2,strcat(out_dir,'angle_O_',Np_Iter,'_figure.png'),'-m4');
 
 abs_O = abs(O);
-imwrite(abs_O, strcat(out_dir,'abs_O_',Np_Iter,'_image.png'));
+imwrite(uint16(abs_O), strcat(out_dir,'abs_O_',Np_Iter,'_image.png'),'BitDepth',16);
 f3 = figure('visible','off');imshow(abs_O,[]);
 title('abs (O)');
 export_fig(f3,strcat(out_dir,'abs_O_',Np_Iter,'_figure.png'),'-m4');
@@ -340,24 +341,41 @@ ylabel('log err');
 export_fig(f_err_log,strcat(out_dir,'err_log_',Np_Iter,'.png'),'-m4');
 
 
-% saving variables to matlab files
-hig_res_O_matfile = fullfile(out_dir, ['hig_res_O_',Np_Iter,'.mat']);
-save(hig_res_O_matfile, 'O', 'real_O', '-v7.3');
-all_vars_matfile = fullfile(out_dir, ['all_vars_',Np_Iter,'.mat']);
-%save(all_vars_matfile);
-save(all_vars_matfile, '-v7.3');
+%% saving variables to matlab files
+%all_vars_matfile = fullfile(out_dir, ['all_vars_',Np_Iter,'.mat']);
+%%save(all_vars_matfile);
+%save(all_vars_matfile, '-v7.3');
 % To save all but some large variables,e.g. I, Iall,etc (uncomment next line)
-%save(all_vars_matfile, '-regexp','^(?!(I|Iall|Imea_reorder|Ithresh_reorder)$).');
+%%save(all_vars_matfile, '-regexp','^(?!(I|Iall|Imea_reorder|Ithresh_reorder)$).');
 
 
 %post-processing of the white pixels w/ high intensity
 proc_abs_O = abs(O);
 proc_abs_O(abs(O)>25) = 25;
 %proc_abs_O(abs(O)>18) = 18;
-imwrite(proc_abs_O, strcat(out_dir,'proc_abs_O_',Np_Iter,'_image.png'));
+imwrite(uint16(proc_abs_O), strcat(out_dir,'proc_abs_O_',Np_Iter,'_image.png'),'BitDepth',16);
+
 f5 = figure('visible','off');imshow(proc_abs_O,[]);
 title(['processed abs (O)']);
 export_fig(f5,strcat(out_dir,'proc_abs_O_',Np_Iter,'_figure.png'),'-m4');
 
+fprintf('\nfinished Altermin.m\n');
+fprintf('\nGetting/saving low res intensities\n');
+
+hightolowRes(O,P,dirac_cen,idx_led,Np,opts);
 
 fprintf('processing completes\n');
+
+% writing README
+readmef = fopen( strcat(out_dir,'/','README.txt'), 'wt' );
+
+fprintf('\nwriting the README file.\n');
+fprintf(readmef, '\nThis directory has the measured & estimated images of size %2d x %2d.\n', Np(1), Np(2));
+for j=1:20, fprintf(readmef,'-'); end
+fprintf(readmef,'\n');
+fprintf(readmef,'\nParamters used for these computed images:\n');
+fprintf(readmef,'\nNp: %2d x %2d.\n', Np(1), Np(2));
+fprintf(readmef,'\nminIter: %2d.\n', opts.minIter);
+fprintf(readmef,'\nmaxIter: %2d.\n', opts.maxIter);
+
+fclose(readmef);

@@ -109,6 +109,7 @@ ncent = [1080,1280];
 % start pixel of the image patch
 %nstart = [981,1181];
 %nstart = [801,1001];
+%nstart = [1081, 1281];
 nstart = [1,1];
 % center, start & end of the image patch
 img_ncent = [nstart(1)-ncent(1)+Np(1)/2,  nstart(2)-ncent(2)+Np(2)/2];
@@ -132,7 +133,8 @@ z_led = 67.5e3;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % diameter of # of LEDs used in the experiment
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-dia_led = 19;
+%dia_led = 19;
+dia_led = 1;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % set up LED coordinates

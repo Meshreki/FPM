@@ -64,13 +64,15 @@ sample_name= 'USAF'; %'stained', 'USAF', 'hela'
 % multiplex reading of images
 input_dir_name = containers.Map({'stained'; 'USAF'; 'hela'},...
 {'../data/Tian14/1LED/tif/';...
-   '../data/Tian14_ResTarget/1LED/';...
+   %'../data/Tian14_ResTarget/1LED/';...
+   '../data/CSE/2022_11_07/2022_11_07_13_34_41/1LED/';...
    '../data/Tian15_inVitroHeLa/data/'});
 
 filedir = input_dir_name(sample_name);
 
 % Generate the image list, in 'tif' image format (depending on your image format)
 imglist = dir([filedir,'*.tif']);
+%imglist = dir([filedir,'*.tiff']);
 nstart = [100, 100];
 N = natsortfiles({imglist.name});%sorting the images in 
 
@@ -80,7 +82,7 @@ N = natsortfiles({imglist.name});%sorting the images in
 % map container of output directory path to
 out_dir_name = containers.Map({'stained'; 'USAF'; 'hela'},...
 {strcat('../out_dir/Tian14_StainedHistologySlide/',todaysdate,'/',todaysdatetime,'/');...
-    strcat('../out_dir/Tian14_ResTarget/',todaysdate,'/',todaysdatetime,'/');...
+    strcat('/tmp/fpm/FPM/out_dir/Tian14_ResTarget/',todaysdate,'/',todaysdatetime,'/');...
     strcat('../out_dir/Out_Tian15_inVitroHeLa/',todaysdate,'/',todaysdatetime,'/')});
 
 out_dir = out_dir_name(sample_name);
@@ -94,12 +96,14 @@ diary(strcat(out_dir,'/','log_',todaysdatetime,'.txt'));
 numlit = 1;
 % raw image size
 n1 = 2160; n2 = 2560;
+%n1 = 3753; n2 = 5634;
 
 
 %% read in all images into the memory first
 fprintf(['loading the images...\n']);
 tic;
 Nimg = length(imglist);
+fprintf('no. of images loaded:%2d \n', Nimg);
 Iall = zeros(n1,n2,Nimg,'uint16'); %3d array; each pixel in the 2d image for all images
 Ibk = zeros(Nimg,1);
 for m = 1:Nimg
@@ -145,8 +149,10 @@ save(all_vars_matfile, 'I_input_stack_cropped');
 
 
 %% define processing ROI
-Np = [2160, 2560];
+%Np = [2160, 2560];
 %Np = [344, 344];
+Np = [902, 902];
+%Np = [100, 150];
 
 
 %% read system parameters
@@ -235,7 +241,8 @@ Ns_reorder = Ns(:,idx_led,:); % 1st element is empty!
 clear Imea;
 %% reconstruction algorithm
 % select the index of images that will be used in the processing
-Nused = 293;
+%Nused = 293;
+Nused = 1;
 idx_used = 1:Nused;
 I = Ithresh_reorder(:,:,idx_used);
 Ns2 = Ns_reorder(:,idx_used,:);
@@ -299,6 +306,17 @@ f88 = [];
 %% algorithm starts
 [O,P,dirac_cen,err_pc,c,Ns_cal] = AlterMin(I,[N_obj(1),N_obj(2)],round(Ns2),opts);
 
+%% save results for Onofre
+recons_img = O;
+recons_img_matfile = fullfile(opts.out_dir, ['recons_img','.mat']);
+save(recons_img_matfile, "recons_img");
+
+proc_abs_O = abs(O);
+proc_abs_O(abs(O)>25) = 25;
+recons_img = proc_abs_O;
+recons_img_proc_matfile = fullfile(opts.out_dir, ['recons_img_proc','.mat']);
+save(recons_img_proc_matfile, "recons_img");
+
 %% save results
 
 %saving high res (here: after going to real) and dirac peak positions as matfile & figure
@@ -350,10 +368,10 @@ export_fig(f_err_log,strcat(out_dir,'err_log_',Np_Iter,'.png'),'-m4');
 
 
 %post-processing of the white pixels w/ high intensity
-proc_abs_O = abs(O);
-proc_abs_O(abs(O)>25) = 25;
+%proc_abs_O = abs(O);
+%proc_abs_O(abs(O)>25) = 25;
 %proc_abs_O(abs(O)>18) = 18;
-imwrite(uint16(proc_abs_O), strcat(out_dir,'proc_abs_O_',Np_Iter,'_image.png'),'BitDepth',16);
+%imwrite(uint16(proc_abs_O), strcat(out_dir,'proc_abs_O_',Np_Iter,'_image.png'),'BitDepth',16);
 
 f5 = figure('visible','off');imshow(proc_abs_O,[]);
 title(['processed abs (O)']);

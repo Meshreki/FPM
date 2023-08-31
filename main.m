@@ -64,13 +64,15 @@ sample_name= 'USAF'; %'stained', 'USAF', 'hela'
 % multiplex reading of images
 input_dir_name = containers.Map({'stained'; 'USAF'; 'hela'},...
 {'../data/Tian14/1LED/tif/';...
-   '../data/Tian14_ResTarget/1LED/';...
+   %'../data/Tian14_ResTarget/1LED/';...
+   '../data/CSE/2023_08_28/nine_images/';...
    '../data/Tian15_inVitroHeLa/data/'});
 
 filedir = input_dir_name(sample_name);
 
 % Generate the image list, in 'tif' image format (depending on your image format)
-imglist = dir([filedir,'*.tif']);
+%imglist = dir([filedir,'*.tif']);
+imglist = dir([filedir,'*.png']);
 nstart = [100, 100];
 N = natsortfiles({imglist.name});%sorting the images in 
 
@@ -80,7 +82,8 @@ N = natsortfiles({imglist.name});%sorting the images in
 % map container of output directory path to
 out_dir_name = containers.Map({'stained'; 'USAF'; 'hela'},...
 {strcat('../out_dir/Tian14_StainedHistologySlide/',todaysdate,'/',todaysdatetime,'/');...
-    strcat('../out_dir/Tian14_ResTarget/',todaysdate,'/',todaysdatetime,'/');...
+    %strcat('../out_dir/Tian14_ResTarget/',todaysdate,'/',todaysdatetime,'/');...
+    strcat('../out_dir/CSE/',todaysdate,'/',todaysdatetime,'/');...    
     strcat('../out_dir/Out_Tian15_inVitroHeLa/',todaysdate,'/',todaysdatetime,'/')});
 
 out_dir = out_dir_name(sample_name);
@@ -93,7 +96,9 @@ diary(strcat(out_dir,'/','log_',todaysdatetime,'.txt'));
 %% define # of LEDs used to capture each image
 numlit = 1;
 % raw image size
-n1 = 2160; n2 = 2560;
+%n1 = 2160; n2 = 2560;
+n1 = 375; n2 = 563;
+
 
 
 %% read in all images into the memory first
@@ -109,6 +114,7 @@ for m = 1:Nimg
     disp(fn);
     % all image data
     I = double(imread(fn));
+    I = rgb2gray(I); %convert RGB to grayscale %CSE nimrud
     %I = normalize_img(I); % normalize measured image
     Iall(:,:,m) = I  ; %filling 3d array by replacing zeros in 1st&2nd elements by the image values and 3rd element is index of image
     
@@ -117,7 +123,8 @@ for m = 1:Nimg
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % backgr4ound noise esimtation 
     bk1 = mean2(double(Iall(1:100,1:100,m)));
-    bk2 = mean2(double(Iall(492:600,2380:2520,m)));
+    %bk2 = mean2(double(Iall(492:600,2380:2520,m)));
+    bk2 = 0.0; %CSE nimrud
 
     Ibk(m) = mean([bk1,bk2]);
     % brightfield background processing
@@ -136,8 +143,8 @@ fprintf(['\nfinish loading images\n']);
 toc;
 
 %% define processing ROI
-Np = [2160, 2560];
-%Np = [344, 344];
+%Np = [2160, 2560];
+Np = [344, 344];
 
 
 %% read system parameters
@@ -226,7 +233,8 @@ Ns_reorder = Ns(:,idx_led,:); % 1st element is empty!
 clear Imea;
 %% reconstruction algorithm
 % select the index of images that will be used in the processing
-Nused = 293;
+%Nused = 293;
+Nused = 9; %CSE nimrud
 idx_used = 1:Nused;
 I = Ithresh_reorder(:,:,idx_used);
 Ns2 = Ns_reorder(:,idx_used,:);

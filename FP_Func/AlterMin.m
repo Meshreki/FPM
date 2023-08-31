@@ -241,9 +241,11 @@ fprintf('| %2d   | %.2e |\n',iter,err1);
 %GUESS -- needs to be validated: maximum distance between Dirac peaks corresponding to LEDs in the FD 
 sp0 = max(row(abs(Ns(:,1,:)-Ns(:,2,:))));
 
-dirac_cen = zeros(293,2); %dirac positions corresponding to each image
+%dirac_cen = zeros(293,2); %dirac positions corresponding to each image
+dirac_cen = zeros(9,2); %dirac positions corresponding to each image %CSE nimrud
 
-I_meas_stack = zeros(Np(1),Np(2), 293); % measured images stack
+%I_meas_stack = zeros(Np(1),Np(2), 293); % measured images stack
+I_meas_stack = zeros(Np(1),Np(2), 289); % measured images stack %CSE nimrud
 
 while abs(err1-err2)>opts.tol&&iter<opts.maxIter
 %     psistack = zeros(64,64,293);

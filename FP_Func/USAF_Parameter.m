@@ -25,12 +25,14 @@ row = @(x) x(:).';
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % wavelength of illumination, assume monochromatic
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-lambda = 0.6292;
+%lambda = 0.6292;
+lambda = 0.519; %CSE nimrud
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % numerical aperture of the objective
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-NA = 0.1;
+%NA = 0.1;
+NA = 0.3; %CSE nimrud
 
 % maximum spatial frequency set by NA
 um_m = NA/lambda;
@@ -44,9 +46,11 @@ dx0 = 1/um_m/2;
 % need to calibrate with calibration slides
 % on 4x objective, front port
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-mag = 8.1485;
+%mag = 8.1485;
+mag = 10; %CSE nimrud
 
-dpix_c = 6.5; %6.5um pixel size on the sensor plane
+%dpix_c = 6.5; %6.5um pixel size on the sensor plane
+dpix_c = 6.4; %6.5um pixel size on the sensor plane %CSE nimrud
 % effective image pixel size on the object plane
 dpix_m = dpix_c/mag; 
 
@@ -105,7 +109,8 @@ clear m mm nn
 % original image size: 2160x2560
 % can calibrate the center of the illumination with respect to the image by
 % looking at the data from the dark/bright field image transitions
-ncent = [1080,1280];
+%ncent = [1080,1280];
+ncent = [188,282]; %CSE nimrud
 % start pixel of the image patch
 %nstart = [981,1181];
 %nstart = [801,1001];
@@ -127,12 +132,14 @@ ds_led = 4e3; %4mm
 % distance from the LED to the object
 % experientally determined by placing a grating object
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-z_led = 67.5e3;
+%z_led = 67.5e3;
+z_led = 66.5e3; %CSE nimrud
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % diameter of # of LEDs used in the experiment
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-dia_led = 19;
+%dia_led = 19;
+dia_led = 3;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % set up LED coordinates

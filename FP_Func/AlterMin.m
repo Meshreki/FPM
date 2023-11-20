@@ -182,8 +182,8 @@ Ft = opts.Ft;
 Ps = opts.Ps;
 % operator to crop region of O from proper location at the O plane
 % - this is somewhat misnamed - it is a crop operation in the FD
-downsamp = @(x,cen) x(cen(1)-floor(Np(1)/2):cen(1)-floor(Np(1)/2)+Np(1)-1,...
-    cen(2)-floor(Np(2)/2):cen(2)-floor(Np(2)/2)+Np(2)-1);
+downsamp = @(x,cen) x(cen(1)-floor(Np(1)/2) + 1 :cen(1)-floor(Np(1)/2)+Np(1)-1 + 1,...
+    cen(2)-floor(Np(2)/2) + 1:cen(2)-floor(Np(2)/2)+Np(2)-1 +1);
 
 T0 = clock;
 
@@ -241,9 +241,11 @@ fprintf('| %2d   | %.2e |\n',iter,err1);
 %GUESS -- needs to be validated: maximum distance between Dirac peaks corresponding to LEDs in the FD 
 sp0 = max(row(abs(Ns(:,1,:)-Ns(:,2,:))));
 
-dirac_cen = zeros(293,2); %dirac positions corresponding to each image
+%dirac_cen = zeros(293,2); %dirac positions corresponding to each image
+dirac_cen = zeros(9,2); %dirac positions corresponding to each image
 
-I_meas_stack = zeros(Np(1),Np(2), 293); % measured images stack
+%I_meas_stack = zeros(Np(1),Np(2), 293); % measured images stack
+I_meas_stack = zeros(Np(1),Np(2), 9); % measured images stack
 
 while abs(err1-err2)>opts.tol&&iter<opts.maxIter
 %     psistack = zeros(64,64,293);
@@ -262,6 +264,13 @@ while abs(err1-err2)>opts.tol&&iter<opts.maxIter
             dirac_cen(m,1) = cen(1,p);
             dirac_cen(m,2) = cen(2,p);
             scale0(p) = scale(p,m); %corresponding relative intensity
+            %fprintf('here units is: %2s %d\n',f1.Units);
+            %%%%%%%%%%%%%%%%%%%%%
+            fprintf('first element: %d\n', cen(1)-floor(Np(1)/2) + 1)
+            fprintf('second element: %d\n', cen(1)-floor(Np(1)/2)+Np(1)-1 +1)
+            fprintf('third element: %d\n', cen(2)-floor(Np(2)/2) + 1)
+            fprintf('fourth element: %d\n', cen(2)-floor(Np(2)/2)+Np(2)-1 +1)
+            %%%%%%%%%%%%%%%%%%%%%
             Psi0(:,:,p) = downsamp(O,cen(:,p)).*P.*H0; %crop a low-res estimate around LED Dirac position, multiply with combined pupil function (known and estimated components), Eq. 6 Tian'14
             Psi_scale(:,:,p) = sqrt(scale0(p))*Psi0(:,:,p); %adjust its relative brightness
         end

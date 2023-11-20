@@ -39,7 +39,8 @@ Np = size(P); Np = Np(:); % convert a row into a column
 n1 = [cen(1)-floor(Np(1)/2), cen(2)-floor(Np(2)/2)];
 n2 = [n1(1)+Np(1)-1, n1(2)+Np(2)-1];
 % operator to crop region of O from proper location at the O plane
-downsamp = @(x) x(n1(1):n2(1),n1(2):n2(2));
+%downsamp = @(x) x(n1(1):n2(1),n1(2):n2(2));
+downsamp = @(x) x(n1(1)+1:n2(1)+1,n1(2)+1:n2(2)+1);
 
 O1 = downsamp(O);
 

@@ -64,7 +64,8 @@ sample_name= 'USAF'; %'stained', 'USAF', 'hela'
 % multiplex reading of images
 input_dir_name = containers.Map({'stained'; 'USAF'; 'hela'},...
 {'../data/Tian14/1LED/tif/';...
-   '../data/Tian14_ResTarget/1LED/';...
+   %'../data/Tian14_ResTarget/1LED/';...
+   '../data/Tian14_ResTarget/1LED/nine_images/';...
    '../data/Tian15_inVitroHeLa/data/'});
 
 filedir = input_dir_name(sample_name);
@@ -83,7 +84,7 @@ out_dir_name = containers.Map({'stained'; 'USAF'; 'hela'},...
     strcat('../out_dir/Tian14_ResTarget/',todaysdate,'/',todaysdatetime,'/');...
     strcat('../out_dir/Out_Tian15_inVitroHeLa/',todaysdate,'/',todaysdatetime,'/')});
 
-out_dir = out_dir_name(sample_name);
+%out_dir = out_dir_name(sample_name);
 mkdir(out_dir);
 
 % keep a log
@@ -119,7 +120,8 @@ for m = 1:Nimg
     bk1 = mean2(double(Iall(1:100,1:100,m)));
     bk2 = mean2(double(Iall(492:600,2380:2520,m)));
 
-    Ibk(m) = mean([bk1,bk2]);
+    %Ibk(m) = mean([bk1,bk2]);
+    Ibk(m) = 0.0;
     % brightfield background processing
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % TODO 4: if Ibk is larger than some threshold, it is not noise! (chnage 
@@ -136,8 +138,10 @@ fprintf(['\nfinish loading images\n']);
 toc;
 
 %% define processing ROI
-Np = [2160, 2560];
-%Np = [344, 344];
+%Np = [2160, 2560];
+Np = [344, 344];
+%Np = [600, 600];
+%Np = [115, 115];
 
 
 %% read system parameters
@@ -226,7 +230,8 @@ Ns_reorder = Ns(:,idx_led,:); % 1st element is empty!
 clear Imea;
 %% reconstruction algorithm
 % select the index of images that will be used in the processing
-Nused = 293;
+%Nused = 293;
+Nused = 9;
 idx_used = 1:Nused;
 I = Ithresh_reorder(:,:,idx_used);
 Ns2 = Ns_reorder(:,idx_used,:);
